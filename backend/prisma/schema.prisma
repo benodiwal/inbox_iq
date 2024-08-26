@@ -8,5 +8,57 @@ datasource db {
 }
 
 model User {
-   id String @id @default(uuid())
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String?
+  googleId      String?        @unique
+  emailAccounts EmailAccount[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model EmailAccount {
+  id           String   @id @default(uuid())
+  platform     Platform
+  email        String   @unique
+  accessToken  String
+  refreshToken String
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  emails       Email[]
+}
+
+model Email {
+  id             String         @id @default(uuid())
+  subject        String
+  content        String
+  sender         String
+  receivedAt     DateTime
+  category       EmailCategory
+  response       String?
+  responseStatus ResponseStatus @default(PENDING)
+  accountId      String
+  account        EmailAccount   @relation(fields: [accountId], references: [id])
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+enum Platform {
+  GMAIL
+  OUTLOOK
+}
+
+enum EmailCategory {
+  INTERESTED
+  NOT_INTERESTED
+  MORE_INFORMATION
+  UNCATEGORIZED
+}
+
+enum ResponseStatus {
+  PENDING
+  SENT
+  FAILED
 }
