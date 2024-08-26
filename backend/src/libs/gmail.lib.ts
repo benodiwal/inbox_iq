@@ -94,6 +94,27 @@ class GmailOAuthClient {
       throw new Error(`Failed to send message: ${error.message}`);
     }
   }
+
+  async watchMailBox(accessToken: string, topicName: string): Promise<string> {
+    try {
+        this.client.setCredentials({ access_token: accessToken });
+        const response = await this.gmail.users.watch({
+            userId: 'me',
+            requestBody: {
+                topicName,
+                labelIds: ['INBOX'],
+            },
+        });
+
+        return response.data.historyId;
+    } catch (err: any) {
+        throw new Error(`Failed to setup Gmail watch: ${err.message}`);
+    }
+  }
+
+  async renewWatchMailbox(accessToken: string, topicName: string): Promise<string> {
+    return this.watchMailBox(accessToken, topicName);
+  }
 }
 
 const gmailOAuthClient = new GmailOAuthClient();

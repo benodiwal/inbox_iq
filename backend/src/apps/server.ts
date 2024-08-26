@@ -7,6 +7,7 @@ import authRouter from 'routes/auth.router';
 import userRouter from 'routes/user.router';
 import cors from 'cors';
 import getEnvVar from 'env/index';
+import webhookRouter from 'routes/webhook.router';
 
 const expressApp = Express();
 
@@ -25,6 +26,7 @@ expressApp.get('/', (_, res) => {
 });
 
 expressApp.use('/auth', authRouter);
+expressApp.use('/webhook', webhookRouter);
 expressApp.use('/user', isAuthenticated(), userRouter);
 
 export default expressApp;

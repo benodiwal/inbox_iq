@@ -9,8 +9,11 @@ import openAiService from './openai.lib';
 class EmailProcessingService {
     private emailQueue: Queue<EmailJob>;
     private emailWorker: Worker<EmailJob>;
+    private subscriptionRenewalInterval: NodeJS.Timeout;
 
     constructor() {
+        this.subscriptionRenewalInterval = setInterval(() => this.renewAllSubscriptions(), 24*60*60*1000);
+
         const connection = new Redis(getEnvVar('REDIS_URL'));
         this.emailQueue = new Queue<EmailJob>('email-processing', {
             connection,
@@ -79,6 +82,70 @@ class EmailProcessingService {
             console.error(`Error processing email ${emailId}: `, err);
             throw err;
         }
+    }
+
+    public async setupSubscription(accountId: string): Promise<void> {
+        try {
+            const account = await prisma.emailAccount.findUnique({ where: { id: accountId } });
+            if (!account) throw new Error('Email account not found');
+
+            if (account.platform === 'GMAIL') {
+                await this.setupGmailSubscription(account);
+            } else if (account.platform === 'OUTLOOK') {
+                await this.setupOutlookSubscription(account);
+            }
+        } catch (error) {
+            console.error(`Error setting up subscription for account ${accountId}:`, error);
+            throw error;
+        }
+    }
+
+    private async setupGmailSubscription(account: any): Promise<void> {
+        const topic = `projects/${getEnvVar('GOOGLE_PROJECT_ID')}/topics/${getEnvVar('GOOGLE_PUBSUB_TOPIC')}`;
+        await gmailOAuthClient.watchMailBox(account.accessToken, topic);
+    }
+
+    private async setupOutlookSubscription(account: any): Promise<void> {
+        console.log(account);
+    //     const subscriptionId = await outlookOAuthClient.createSubscription(account.accessToken);
+    //     await prisma.emailAccount.update({
+    //         where: { id: account.id },
+    //         data: { outlookSubscriptionId: subscriptionId }
+    //     });
+    }
+    
+    private async renewAllSubscriptions(): Promise<void> {
+        const accounts = await prisma.emailAccount.findMany();
+        for (const account of accounts) {
+            try {
+                if (account.platform === 'GMAIL') {
+                    await this.renewGmailSubscription(account);
+                } else if (account.platform === 'OUTLOOK') {
+                    await this.renewOutlookSubscription(account);
+                }
+                console.log(`Renewed subscription for account ${account.id}`);
+            } catch (error) {
+                console.error(`Failed to renew subscription for account ${account.id}:`, error);
+            }
+        }
+    }
+
+    private async renewGmailSubscription(account: any): Promise<void> {
+        const topic = `projects/${getEnvVar('GOOGLE_PROJECT_ID')}/topics/${getEnvVar('GOOGLE_PUBSUB_TOPIC')}`;
+        await gmailOAuthClient.renewWatchMailbox(account.accessToken, topic);
+    }
+
+    private async renewOutlookSubscription(account: any): Promise<void> {
+        if (account.outlookSubscriptionId) {
+            // await outlookOAuthClient.renewSubscription(account.accessToken, account.outlookSubscriptionId);
+        } else {
+            // If for some reason the subscription ID is missing, create a new subscription
+            // const subscriptionId = await outlookOAuthClient.createSubscription(account.accessToken);
+            // await prisma.emailAccount.update({
+                // where: { id: account.id },
+                // data: { outlookSubscriptionId: subscriptionId }
+            // });
+    }
     }
 }
 

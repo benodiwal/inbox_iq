@@ -13,6 +13,10 @@ const envSchema = z.object({
   MICROSOFT_OAUTH_CLIENT_SECRET: z.string(),
   MICROSOFT_TENANT_ID: z.string(),
   OPENAI_API_KEY: z.string(),
+  GMAIL_WEBHOOK_SECRET: z.string(),
+  OUTLOOK_WEBHOOK_SECRET: z.string(),
+  GOOGLE_PUBSUB_TOPIC: z.string(),
+  GOOGLE_PROJECT_ID: z.string(),
 });
 
 export const parseEnv = (): void => {
