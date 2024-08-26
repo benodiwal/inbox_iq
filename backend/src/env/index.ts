@@ -6,8 +6,12 @@ const envSchema = z.object({
   DATABASE_URL: z.string(),
   COOKIE_SECRET: z.string(),
   CLIENT_ORIGIN: z.string(),
+  REDIS_URL: z.string(),
   GOOGLE_OAUTH_CLIENT_ID: z.string(),
   GOOGLE_OAUTH_CLIENT_SECRET: z.string(),
+  MICROSOFT_OAUTH_CLIENT_ID: z.string(),
+  MICROSOFT_OAUTH_CLIENT_SECRET: z.string(),
+  MICROSOFT_TENANT_ID: z.string(),
 });
 
 export const parseEnv = (): void => {
