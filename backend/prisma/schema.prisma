@@ -10,8 +10,9 @@ datasource db {
 model User {
   id            String         @id @default(uuid())
   email         String         @unique
-  name          String?
-  googleId      String?        @unique
+  name          String
+  sub           String         @unique
+  avatar_url    String
   emailAccounts EmailAccount[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
