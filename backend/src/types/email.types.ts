@@ -5,3 +5,6 @@ export type EmailJob = {
     accountId: string;
     platform: $Enums.Platform,
 };
+
+
+export type category = 'INTERESTED' | 'NOT_INTERESTED' | 'MORE_INFORMATION';
