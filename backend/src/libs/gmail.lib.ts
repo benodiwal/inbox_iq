@@ -1,6 +1,8 @@
 import { google } from 'googleapis';
 import { Credentials, OAuth2Client } from 'google-auth-library';
-import getEnvVar from 'env/index';
+import getEnvVar, { parseEnv } from 'env/index';
+
+parseEnv();
 
 class GmailOAuthClient {
   private client: OAuth2Client;
@@ -54,9 +56,46 @@ class GmailOAuthClient {
       throw new Error(`Failed to list messages: ${error.message}`);
     }
   }
+  
+  async getHistoryList(accessToken: string, startHistoryId: string): Promise<any[]> {
+  try {
+    this.client.setCredentials({ access_token: accessToken as string });
+    
+    let history: any[] = [];
+    let pageToken: string | undefined = undefined;
+
+    do {
+      const response: any = await this.gmail.users.history.list({
+        userId: 'me',
+        startHistoryId,
+        pageToken,
+      });
+
+      if (response.data.history) {
+        history = history.concat(response.data.history);
+      }
+
+      pageToken = response.data.nextPageToken;
+
+      console.log(`Fetched ${response.data.history?.length || 0} history items, nextPageToken: ${pageToken}`);
+
+    } while (pageToken);
+
+    if (history.length === 0) {
+      console.warn('No history found or historyId might be too old or there might not be any changes.');
+    }
+
+    return history;
+  } catch (err: any) {
+    console.error(`Error fetching history: `, err.message);
+    throw new Error(`Failed to fetch history: ${err.message}`);
+  }
+}
+
 
   async getMessage(accessToken: string, messageId: string): Promise<any> {
     try {
+      console.log(messageId);
       this.client.setCredentials({ access_token: accessToken });
       const response = await this.gmail.users.messages.get({
         userId: 'me',

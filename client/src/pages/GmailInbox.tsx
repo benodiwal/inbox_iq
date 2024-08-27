@@ -1,7 +1,7 @@
 const GmailInbox = () => {
   return (
     <div>
-      
+              
     </div>
   )
 }

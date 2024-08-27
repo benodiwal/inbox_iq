@@ -1,4 +1,5 @@
 import prisma from "apps/database";
+import getEnvVar from "env/index";
 import { InternalServerError } from "errors/internal-server-errors";
 import { NextFunction, Request, Response } from "express";
 import googleOAuthClient from "libs/auth.lib";
@@ -46,6 +47,8 @@ export const gmailController = async (req: Request, res: Response, next: NextFun
         const tokens = await gmailOAuthClient.getTokenFromCode(code);
         const response = await gmailOAuthClient.getUserProfile(tokens.access_token as string);
 
+        await gmailOAuthClient.watchMailBox(tokens.access_token as string, getEnvVar('GOOGLE_PUBSUB_TOPIC'));
+
         const account = await prisma.emailAccount.findUnique({ where: { email: response.email } });
         if (account) {
             await prisma.emailAccount.update({
@@ -55,7 +58,7 @@ export const gmailController = async (req: Request, res: Response, next: NextFun
                     refreshToken: tokens.refresh_token as string,
                 }
             });
-            
+
             return res.sendStatus(200);
         }
 

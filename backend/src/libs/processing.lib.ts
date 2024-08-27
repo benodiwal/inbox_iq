@@ -4,7 +4,7 @@ import getEnvVar from 'env/index';
 import Redis from 'ioredis';
 import { EmailJob } from 'types/email.types';
 import gmailOAuthClient from './gmail.lib';
-import openAiService from './openai.lib';
+// import openAiService from './openai.lib';
 
 class EmailProcessingService {
     private emailQueue: Queue<EmailJob>;
@@ -19,7 +19,7 @@ class EmailProcessingService {
             maxRetriesPerRequest: null,
             enableReadyCheck: false        
         });
-        
+
         this.emailQueue = new Queue<EmailJob>('email-processing', {
             connection,
             defaultJobOptions: {
@@ -52,36 +52,49 @@ class EmailProcessingService {
     async processEmail(job: Job<EmailJob>): Promise<void> {
 
         // Todo: Platform
-        const { emailId, accountId } = job.data;
+        const { emailId, messageId } = job.data;
+        console.log("MessageId: ", messageId);
 
         try {
-            const emailAccount = await prisma.emailAccount.findUnique({ where: {id: accountId} });
+            const emailAccount = await prisma.emailAccount.findUnique({ where: { email: emailId } });
             if (!emailAccount) throw new Error('Email account not found');
 
             const emailClient = gmailOAuthClient;
-            const emailData = await emailClient.getMessage(emailAccount.accessToken, emailId);
-            const category = await openAiService.categorizeEmail(emailData.body);
-            const response = await openAiService.generateResponse(emailData.body, category);
 
-            await prisma.email.create({
-                data: {
-                    id: emailId,
-                    subject: emailData.subject,
-                    content: emailData.body,
-                    sender: emailData.from,
-                    receivedAt: new Date(emailData.receivedDateTime),
-                    category,
-                    response,
-                    accountId,
-                }            
-            });
+            let emailData;
+            try {
+                emailData = await emailClient.getMessage(emailAccount.accessToken, messageId);
+            } catch (err: any) {
+                if (err.message.includes('Invalid id')) {
+                    console.warn(`Message with ID ${emailId} not found or no longer exists. Skipping processing.`);
+                    return;
+                }
+                throw err; 
+            }
+            // const category = await openAiService.categorizeEmail(emailData.body.data);
+            // const response = await openAiService.generateResponse(emailData.body.data, category);
+            console.log(emailData.payload);
+            // console.log(response);
 
-            await emailClient.sendMessage(emailAccount.accessToken, emailData.from, `Re: ${emailData.subject}`, response);
+            // await prisma.email.create({
+            //     data: {
+            //         id: emailId,
+            //         subject: emailData.subject || 'No Subject',
+            //         content: emailData.body || 'No Content',
+            //         sender: emailData.from || 'Unknown Sender',
+            //         receivedAt: new Date(emailData.receivedDateTime),
+            //         category,
+            //         response,
+            //         accountId: emailAccount.id,
+            //     }            
+            // });
 
-            await prisma.email.update({
-                where: { id: emailId },
-                data: { responseStatus: 'SENT' }
-            });
+            // await emailClient.sendMessage(emailAccount.accessToken, emailData.from, `Re: ${emailData.subject}`, response);
+
+            // await prisma.email.update({
+            //     where: { id: emailId },
+            //     data: { responseStatus: 'SENT' }
+            // });
 
         } catch (err: unknown) {
             console.error(`Error processing email ${emailId}: `, err);
@@ -106,7 +119,7 @@ class EmailProcessingService {
     }
 
     private async setupGmailSubscription(account: any): Promise<void> {
-        const topic = `projects/${getEnvVar('GOOGLE_PROJECT_ID')}/topics/${getEnvVar('GOOGLE_PUBSUB_TOPIC')}`;
+        const topic = getEnvVar('GOOGLE_PUBSUB_TOPIC');
         await gmailOAuthClient.watchMailBox(account.accessToken, topic);
     }
 
@@ -136,7 +149,7 @@ class EmailProcessingService {
     }
 
     private async renewGmailSubscription(account: any): Promise<void> {
-        const topic = `projects/${getEnvVar('GOOGLE_PROJECT_ID')}/topics/${getEnvVar('GOOGLE_PUBSUB_TOPIC')}`;
+        const topic = getEnvVar('GOOGLE_PUBSUB_TOPIC');
         await gmailOAuthClient.renewWatchMailbox(account.accessToken, topic);
     }
 

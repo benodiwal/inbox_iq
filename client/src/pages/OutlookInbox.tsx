@@ -1,7 +1,7 @@
 const OutlookInbox = () => {
   return (
     <div>
-             
+
     </div>
   )
 }

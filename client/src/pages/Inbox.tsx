@@ -75,7 +75,7 @@ const Inbox = () => {
       await sendGmailCode.mutateAsync(code);
     },
     flow: "auth-code",
-    scope: "email profile openid https://www.googleapis.com/auth/gmail.modify",
+    scope: "email profile openid https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/pubsub",
   });
 
   const handleConnectOutlook = () => {
