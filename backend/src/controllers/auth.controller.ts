@@ -2,6 +2,7 @@ import prisma from "apps/database";
 import { InternalServerError } from "errors/internal-server-errors";
 import { NextFunction, Request, Response } from "express";
 import googleOAuthClient from "libs/auth.lib";
+import gmailOAuthClient from "libs/gmail.lib";
 import { IGoogleAuthPayloadSchema } from "routes/auth.router"
 
 export const authController = async (req: Request, res: Response, next: NextFunction) => {
@@ -30,6 +31,33 @@ export const authController = async (req: Request, res: Response, next: NextFunc
         });
 
         req.session.currentUserId = newUser.id;
+        res.sendStatus(200);
+
+    } catch (err: unknown) {
+        console.error(err);
+        next(new InternalServerError());
+    }
+}
+
+export const gmailController = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { code } = req.body as unknown as IGoogleAuthPayloadSchema;
+        const userId = req.session.currentUserId as string;
+        const tokens = await gmailOAuthClient.getTokenFromCode(code);
+        const response = await gmailOAuthClient.getUserProfile(tokens.access_token as string);
+
+        await prisma.emailAccount.create({
+            data: {
+                accessToken: tokens.access_token as string,
+                refreshToken: tokens.refresh_token as string,
+                platform: 'GMAIL',
+                user: {
+                    connect: { id: userId }
+                },
+                email: response.email,
+            }
+        });
+
         res.sendStatus(200);
 
     } catch (err: unknown) {

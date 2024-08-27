@@ -16,3 +16,15 @@ export const useSendCode = () => {
 
     return mut;
 }
+
+export const useSendGmailCode = () => {
+
+    const mut = useMutation({
+        mutationKey: ["gmailCode"],
+        mutationFn: (code: string) => AxiosClient.post('/auth/gmail/callback', {
+            code,
+        }),
+    });
+
+    return mut;
+}

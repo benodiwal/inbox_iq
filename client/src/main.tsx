@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { GoogleOAuthProvider } from "@react-oauth/google"
 import AppLayout from './layouts/AppLayout'
 import AuthContext from './context/AuthContext'
+import Inbox from './pages/Inbox'
 
 const router = createBrowserRouter([
   {
@@ -34,6 +35,10 @@ const router = createBrowserRouter([
                 path: '/app',
                 element: <App />,
               },
+              {
+                path: '/inbox',
+                element: <Inbox />
+              }
             ]
         }
       ]

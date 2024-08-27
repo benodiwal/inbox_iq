@@ -19,7 +19,7 @@ const Login = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
             <div className="max-w-5xl w-full mx-auto flex shadow-2xl rounded-xl overflow-hidden">
-                <div className="w-1/2 bg-indigo-600 p-12 flex flex-col justify-center items-center text-white hidden md:flex">
+                <div className="w-1/2 bg-indigo-600 p-12 flex-col justify-center items-center text-white hidden md:flex">
                     <motion.div
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
