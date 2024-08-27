@@ -17,7 +17,7 @@ export const authController = async (req: Request, res: Response, next: NextFunc
 
         if (existingUser) {
             req.session.currentUserId = existingUser.id;
-            res.sendStatus(200);
+            return res.sendStatus(200);
         }
 
         const newUser = await prisma.user.create({

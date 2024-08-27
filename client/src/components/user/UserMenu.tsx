@@ -15,7 +15,7 @@ import { Dialog } from "../ui/dialog";
 import { useState } from "react";
 
 const UserAvatar = ({ data }: { data: User }) => {
-  
+
   return (
     <Avatar>
       <AvatarImage src={data.avatar_url} alt={data.name} />

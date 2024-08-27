@@ -13,8 +13,13 @@ class EmailProcessingService {
 
     constructor() {
         this.subscriptionRenewalInterval = setInterval(() => this.renewAllSubscriptions(), 24*60*60*1000);
+        console.log(this.subscriptionRenewalInterval);
 
-        const connection = new Redis(getEnvVar('REDIS_URL'));
+        const connection = new Redis(getEnvVar('REDIS_URL'), {
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false        
+        });
+        
         this.emailQueue = new Queue<EmailJob>('email-processing', {
             connection,
             defaultJobOptions: {

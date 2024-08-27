@@ -13,7 +13,7 @@ const expressApp = Express();
 
 expressApp.use(logger);
 expressApp.use(Express.json());
-expressApp.use(cors({ credentials: true, origin: '*' }));
+expressApp.use(cors({ credentials: true, origin: getEnvVar('CLIENT_ORIGIN') }))
 expressApp.use(cookieSession({ secure: false, httpOnly: true, secret: getEnvVar('COOKIE_SECRET'), signed: true, name: 'benodiwal' }));
 expressApp.use(error());
 
