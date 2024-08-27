@@ -9,6 +9,8 @@ import { GoogleOAuthProvider } from "@react-oauth/google"
 import AppLayout from './layouts/AppLayout'
 import AuthContext from './context/AuthContext'
 import Inbox from './pages/Inbox'
+import GmailInbox from './pages/GmailInbox'
+import OutlookInbox from './pages/OutlookInbox'
 
 const router = createBrowserRouter([
   {
@@ -38,6 +40,14 @@ const router = createBrowserRouter([
               {
                 path: '/inbox',
                 element: <Inbox />
+              },
+              {
+                path: '/inbox/gmail/:id',
+                element: <GmailInbox />,
+              },
+              {
+                path: '/inbox/outlook/:id',
+                element: <OutlookInbox />
               }
             ]
         }

@@ -46,6 +46,19 @@ export const gmailController = async (req: Request, res: Response, next: NextFun
         const tokens = await gmailOAuthClient.getTokenFromCode(code);
         const response = await gmailOAuthClient.getUserProfile(tokens.access_token as string);
 
+        const account = await prisma.emailAccount.findUnique({ where: { email: response.email } });
+        if (account) {
+            await prisma.emailAccount.update({
+                where: { id: account.id },
+                data: {
+                    accessToken: tokens.access_token as string,
+                    refreshToken: tokens.refresh_token as string,
+                }
+            });
+            
+            return res.sendStatus(200);
+        }
+
         await prisma.emailAccount.create({
             data: {
                 accessToken: tokens.access_token as string,
