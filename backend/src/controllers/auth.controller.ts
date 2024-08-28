@@ -46,8 +46,8 @@ export const gmailController = async (req: Request, res: Response, next: NextFun
         const userId = req.session.currentUserId as string;
         const tokens = await gmailOAuthClient.getTokenFromCode(code);
         const response = await gmailOAuthClient.getUserProfile(tokens.access_token as string);
-
-        await gmailOAuthClient.watchMailBox(tokens.access_token as string, getEnvVar('GOOGLE_PUBSUB_TOPIC'));
+        
+        const historyId = await gmailOAuthClient.watchMailBox(tokens.access_token as string, getEnvVar('GOOGLE_PUBSUB_TOPIC'));
 
         const account = await prisma.emailAccount.findUnique({ where: { email: response.email } });
         if (account) {
@@ -56,6 +56,7 @@ export const gmailController = async (req: Request, res: Response, next: NextFun
                 data: {
                     accessToken: tokens.access_token as string,
                     refreshToken: tokens.refresh_token as string,
+                    lastProcessedHistoryId: historyId,
                 }
             });
 
@@ -71,6 +72,7 @@ export const gmailController = async (req: Request, res: Response, next: NextFun
                     connect: { id: userId }
                 },
                 email: response.email,
+                lastProcessedHistoryId: historyId,
             }
         });
 

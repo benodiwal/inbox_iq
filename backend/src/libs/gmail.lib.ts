@@ -44,12 +44,13 @@ class GmailOAuthClient {
     }
   }
 
-  async listMessages(accessToken: string, query: string = ''): Promise<any[]> {
+  async listMessages(accessToken: string, query: string = '', maxResults = 10): Promise<any[]> {
     try {
       this.client.setCredentials({ access_token: accessToken });
       const response = await this.gmail.users.messages.list({
         userId: 'me',
         q: query,
+        maxResults
       });
       return response.data.messages || [];
     } catch (error: any) {

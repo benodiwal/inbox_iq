@@ -7,23 +7,64 @@ import emailProcessingService from "libs/processing.lib";
 export const gmailWebhook = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const message = req.body.message;
-        // const message_id = req.body.message.message_id as string;
         const data = JSON.parse(Buffer.from(message.data, 'base64').toString());
         const emailAddress = data.emailAddress as string;
-        const emailAccount = await prisma.emailAccount.findUnique({ where: { email: emailAddress } });
+        const historyId = data.historyId as string;
 
-        const messages = await gmailOAuthClient.listMessages(emailAccount?.accessToken as string, 'is:unread');
-        for (const message of messages) {
-            await emailProcessingService.addEmailToQueue({ emailId: emailAddress, messageId: message.id, platform: 'GMAIL' });
+        console.log(`Processing webhook for email: ${emailAddress}, historyId: ${historyId}`);
+
+        const emailAccount = await prisma.emailAccount.findUnique({ where: { email: emailAddress } });
+        if (!emailAccount) {
+            console.log(`Email account not found for address: ${emailAddress}`);
+            return res.sendStatus(404);
         }
+
+        const latestMessages = await gmailOAuthClient.listMessages(emailAccount.accessToken, 'is:unread', 1);
         
-        // const historyId = data.historyId as string;
-        // const h = await gmailOAuthClient.getHistoryList(emailAccount?.accessToken as string, historyId);
-        // console.log(h);
+        if (latestMessages.length === 0) {
+            console.log('No new unread messages found');
+            return res.sendStatus(200);
+        }
+
+        const latestMessage = latestMessages[0];
+        console.log(`Latest message ID: ${latestMessage.id}`);
+
+        const existingEmail = await prisma.email.findUnique({
+            where: { id: latestMessage.id }
+        });
+
+        if (existingEmail) {
+            console.log(`Message ${latestMessage.id} has already been processed`);
+            return res.sendStatus(200);
+        }
+
+        const fullMessage = await gmailOAuthClient.getMessage(emailAccount.accessToken, latestMessage.id);
         
+        const messageDate = new Date(parseInt(fullMessage.internalDate));
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+        
+        if (messageDate < fiveMinutesAgo) {
+            console.log(`Message ${latestMessage.id} is older than 5 minutes, skipping`);
+            return res.sendStatus(200);
+        }
+
+        console.log(`Processing latest message: ${latestMessage.id}`);
+        await emailProcessingService.addEmailToQueue({
+            emailId: emailAddress,
+            messageId: latestMessage.id,
+            platform: 'GMAIL',
+        });
+
+        await prisma.emailAccount.update({
+            where: { email: emailAddress },
+            data: { lastProcessedHistoryId: historyId.toString() }
+        });
+
+        console.log(`Updated lastProcessedHistoryId to ${historyId} for email: ${emailAddress}`);
+
         res.sendStatus(200);
     } catch (err: unknown) {
-        console.error(err);
+        console.error('Error in gmailWebhook:', err);
         next(new InternalServerError());
     }
 }

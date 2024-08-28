@@ -24,6 +24,7 @@ model EmailAccount {
   email        String   @unique
   accessToken  String
   refreshToken String
+  lastProcessedHistoryId String?
   userId       String
   user         User     @relation(fields: [userId], references: [id])
   createdAt    DateTime @default(now())
