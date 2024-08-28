@@ -26,6 +26,12 @@ export const useGetUser = () => {
     return query;
 }
 
+export const useUser = () => {
+    const queryClient = useQueryClient();
+    const user = queryClient.getQueryData<User>(["user"]);
+    return user;
+}
+
 export const useGetUserAccounts = () => {
     const query = useQuery<Account[], AxiosError>({
         queryKey: ["accounts"],

@@ -13,6 +13,7 @@ import GmailInbox from './pages/GmailInbox'
 import OutlookInbox from './pages/OutlookInbox'
 import ComingSoonPage from './pages/ComingSoon'
 import HelpPage from './pages/Help'
+import SettingsPage from './pages/Settings'
 
 const router = createBrowserRouter([
   {
@@ -57,7 +58,7 @@ const router = createBrowserRouter([
               },
               {
                 path: '/settings',
-                element: <ComingSoonPage />,
+                element: <SettingsPage />,
               },
               {
                 path: '/help',
