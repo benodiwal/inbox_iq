@@ -11,6 +11,7 @@ import AuthContext from './context/AuthContext'
 import Inbox from './pages/Inbox'
 import GmailInbox from './pages/GmailInbox'
 import OutlookInbox from './pages/OutlookInbox'
+import ComingSoonPage from './pages/ComingSoon'
 
 const router = createBrowserRouter([
   {
@@ -48,6 +49,18 @@ const router = createBrowserRouter([
               {
                 path: '/inbox/outlook/:id',
                 element: <OutlookInbox />
+              },
+              {
+                path: '/analytics',
+                element: <ComingSoonPage />,
+              },
+              {
+                path: '/settings',
+                element: <ComingSoonPage />,
+              },
+              {
+                path: '/help',
+                element: <ComingSoonPage />,
               }
             ]
         }

@@ -4,7 +4,7 @@ import getEnvVar from 'env/index';
 import Redis from 'ioredis';
 import { EmailJob } from 'types/email.types';
 import gmailOAuthClient from './gmail.lib';
-// import openAiService from './openai.lib';
+import openAiService from './openai.lib';
 
 class EmailProcessingService {
     private emailQueue: Queue<EmailJob>;
@@ -71,30 +71,53 @@ class EmailProcessingService {
                 }
                 throw err; 
             }
-            // const category = await openAiService.categorizeEmail(emailData.body.data);
-            // const response = await openAiService.generateResponse(emailData.body.data, category);
-            console.log(emailData.payload);
-            // console.log(response);
+            
+            const sender = emailData.payload.headers.find((header: any) => header.name === 'From')?.value || 'Unknown Sender';
+            const subject = emailData.payload.headers.find((header: any) => header.name === 'Subject')?.value || 'No Subject';
+            const receivedAt = new Date(parseInt(emailData.internalDate, 10));
+            
+            const parts = emailData.payload.parts;
+            let emailContent = '';
+            if (parts) {
+                parts.forEach((part: any) => {
+                    if (part.body.data) {
+                        const decodedData = Buffer.from(part.body.data, 'base64').toString('utf-8');
+                        if (part.mimeType === 'text/html') {
+                            emailContent += decodedData;
+                        } else if (part.mimeType === 'text/plain' && !emailContent) {
+                            emailContent = decodedData;
+                        }
+                    }
+                })
+            } else if (emailData.payload.body.data) {
+                emailContent = Buffer.from(emailData.payload.body.data, 'base64').toString('utf-8');
+            }
 
-            // await prisma.email.create({
-            //     data: {
-            //         id: emailId,
-            //         subject: emailData.subject || 'No Subject',
-            //         content: emailData.body || 'No Content',
-            //         sender: emailData.from || 'Unknown Sender',
-            //         receivedAt: new Date(emailData.receivedDateTime),
-            //         category,
-            //         response,
-            //         accountId: emailAccount.id,
-            //     }            
-            // });
+            if (emailContent.length > 16380) {
+                emailContent = emailContent.substring(0, 16380) + "...";
+            }
 
-            // await emailClient.sendMessage(emailAccount.accessToken, emailData.from, `Re: ${emailData.subject}`, response);
+            const category = await openAiService.categorizeEmail(emailContent);
+            const response = await openAiService.generateResponse(emailContent, category);
 
-            // await prisma.email.update({
-            //     where: { id: emailId },
-            //     data: { responseStatus: 'SENT' }
-            // });
+            const email = await prisma.email.create({
+                data: {
+                    subject,
+                    content: emailContent,
+                    sender,
+                    receivedAt,
+                    category,
+                    response,
+                    accountId: emailAccount.id,
+                }            
+            });
+
+            await emailClient.sendMessage(emailAccount.accessToken, sender, `Re: ${subject}`, response);
+
+            await prisma.email.update({
+                where: { id: email.id },
+                data: { responseStatus: 'SENT' }
+            });
 
         } catch (err: unknown) {
             console.error(`Error processing email ${emailId}: `, err);

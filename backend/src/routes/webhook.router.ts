@@ -1,4 +1,4 @@
-import { gmailWebhook, outlookWebhook } from "controllers/webhook.controller";
+import { outlookWebhook } from "controllers/webhook.controller";
 import { Router } from "express";
 import { z } from 'zod';
 
@@ -9,7 +9,7 @@ const gmailPayloadWebhook = z.object({
     historyId: z.string(),
 });
 export type IGmailPayloadWebhook = z.infer<typeof gmailPayloadWebhook>;
-webhookRouter.post('/gmail', gmailWebhook);
+// webhookRouter.post('/gmail', gmailWebhook);
 webhookRouter.post('/outlook', outlookWebhook);
 
 export default webhookRouter;

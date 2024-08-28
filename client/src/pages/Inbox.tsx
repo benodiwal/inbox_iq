@@ -8,17 +8,13 @@ import { useGetUserAccounts } from '@/state/queries';
 import { useNavigate } from 'react-router-dom';
 import Loading from '@/components/shared/Loading';
 import SomethingWentWrong from '@/components/shared/SomethingWentWrong';
+import { Platform } from '@/types/User';
 
 export type Account = {
     id: string;
     platform: Platform;
     email: string;
 };
-
-export enum Platform {
-    GMAIL = 'GMAIL',
-    OUTLOOK = 'OUTLOOK'
-}
 
 const ConnectedAccountCard = ({ account, onClick }: { account: Account; onClick: () => void }) => (
   <motion.div

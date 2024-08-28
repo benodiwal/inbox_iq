@@ -16,7 +16,7 @@ class OpenAi {
             model: 'gpt-3.5-turbo',
             messages: [
                 { role: 'assistant', content: 'You are am AI assistant that categorized emails.' },
-                { role: 'user', content: `Categorize this email as 'INTERESTED', 'NOT_INTERESTED', or 'MORE_INFORMATION': ${content}` }
+                { role: 'user', content: `Give you answer in single word as asked. Categorize this email as 'INTERESTED', 'NOT_INTERESTED', or 'MORE_INFORMATION': ${content}` }
             ],
         });
 

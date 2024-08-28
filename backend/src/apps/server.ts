@@ -8,6 +8,7 @@ import userRouter from 'routes/user.router';
 import cors from 'cors';
 import getEnvVar from 'env/index';
 import webhookRouter from 'routes/webhook.router';
+import emailRouter from 'routes/email.router';
 
 const expressApp = Express();
 
@@ -28,5 +29,6 @@ expressApp.get('/', (_, res) => {
 expressApp.use('/auth', authRouter);
 expressApp.use('/webhook', webhookRouter);
 expressApp.use('/user', isAuthenticated(), userRouter);
+expressApp.use('/email', isAuthenticated(), emailRouter);
 
 export default expressApp;

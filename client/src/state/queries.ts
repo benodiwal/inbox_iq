@@ -3,6 +3,7 @@ import AxiosClient from "./http";
 import { Account, User } from "@/types/User";
 import { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
+import { Email } from "@/types/Email";
 
 type UserResponse = {
     result: User;
@@ -10,6 +11,10 @@ type UserResponse = {
 
 type UserAccountsResponse = {
     result: Account[]
+}
+
+type EmailResponse = {
+    result: Email[]
 }
 
 export const useGetUser = () => {
@@ -25,6 +30,15 @@ export const useGetUserAccounts = () => {
     const query = useQuery<Account[], AxiosError>({
         queryKey: ["accounts"],
         queryFn: () => AxiosClient.get<UserAccountsResponse>("/user/accounts").then((data) => data.data.result),
+        retry: 1,
+    });
+    return query;
+}
+
+export const useEmails = (accountId: string) => {
+    const query = useQuery<Email[], AxiosError>({
+        queryKey: ["emails"],
+        queryFn: () => AxiosClient.get<EmailResponse>(`/email/${accountId}`).then((data) => data.data.result),
         retry: 1,
     });
     return query;
