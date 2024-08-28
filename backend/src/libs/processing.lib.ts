@@ -55,6 +55,11 @@ class EmailProcessingService {
         const { emailId, messageId } = job.data;
         console.log("MessageId: ", messageId);
 
+        const email = await prisma.email.findFirst({
+            where: { messageId }
+        });
+        if (email) return;
+
         try {
             const emailAccount = await prisma.emailAccount.findUnique({ where: { email: emailId } });
             if (!emailAccount) throw new Error('Email account not found');
@@ -106,6 +111,7 @@ class EmailProcessingService {
                     content: emailContent,
                     sender,
                     receivedAt,
+                    messageId,
                     category,
                     response,
                     accountId: emailAccount.id,

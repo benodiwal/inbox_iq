@@ -63,30 +63,23 @@ class GmailOAuthClient {
     this.client.setCredentials({ access_token: accessToken as string });
     
     let history: any[] = [];
-    let pageToken: string | undefined = undefined;
 
-    do {
-      const response: any = await this.gmail.users.history.list({
+    const response: any = await this.gmail.users.history.list({
         userId: 'me',
         startHistoryId,
-        pageToken,
+        labelId: 'INBOX',
+        historyType: ['messageAdded']
       });
 
       if (response.data.history) {
         history = history.concat(response.data.history);
       }
-
-      pageToken = response.data.nextPageToken;
-
-      console.log(`Fetched ${response.data.history?.length || 0} history items, nextPageToken: ${pageToken}`);
-
-    } while (pageToken);
-
-    if (history.length === 0) {
-      console.warn('No history found or historyId might be too old or there might not be any changes.');
-    }
-
-    return history;
+      
+      if (history.length === 0) {
+        console.warn('No history found or historyId might be too old or there might not be any changes.');
+      }
+      
+      return history;
   } catch (err: any) {
     console.error(`Error fetching history: `, err.message);
     throw new Error(`Failed to fetch history: ${err.message}`);
@@ -142,7 +135,7 @@ class GmailOAuthClient {
             userId: 'me',
             requestBody: {
                 topicName,
-                labelIds: ['INBOX'],
+                labelIds: ['INBOX', 'UNREAD'],
             },
         });
 

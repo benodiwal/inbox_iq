@@ -19,41 +19,36 @@ export const gmailWebhook = async (req: Request, res: Response, next: NextFuncti
             return res.sendStatus(404);
         }
 
-        const latestMessages = await gmailOAuthClient.listMessages(emailAccount.accessToken, 'is:unread', 1);
-        
-        if (latestMessages.length === 0) {
-            console.log('No new unread messages found');
+        if (emailAccount.lastProcessedHistoryId && parseInt(historyId) <= parseInt(emailAccount.lastProcessedHistoryId)) {
+            console.log(`History ID ${historyId} is not newer than last processed ID ${emailAccount.lastProcessedHistoryId}`);
             return res.sendStatus(200);
         }
 
-        const latestMessage = latestMessages[0];
-        console.log(`Latest message ID: ${latestMessage.id}`);
-
-        const existingEmail = await prisma.email.findUnique({
-            where: { id: latestMessage.id }
-        });
-
-        if (existingEmail) {
-            console.log(`Message ${latestMessage.id} has already been processed`);
+        const history = await gmailOAuthClient.getHistoryList(emailAccount.accessToken, emailAccount.lastProcessedHistoryId as string);
+        if (history.length === 0) {
+            console.log('No new history items found');
             return res.sendStatus(200);
         }
+        for (const historyRecord of history) {
+            if (historyRecord.messagesAdded) {
+                for (const addedMessage of historyRecord.messagesAdded) {
+                    const messageId = addedMessage.message.id;
 
-        const fullMessage = await gmailOAuthClient.getMessage(emailAccount.accessToken, latestMessage.id);
-        
-        const messageDate = new Date(parseInt(fullMessage.internalDate));
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-        
-        if (messageDate < fiveMinutesAgo) {
-            console.log(`Message ${latestMessage.id} is older than 5 minutes, skipping`);
-            return res.sendStatus(200);
+                    const fullMessage = await gmailOAuthClient.getMessage(emailAccount.accessToken, messageId);
+
+                    const messageDate = new Date(parseInt(fullMessage.internalDate));
+                    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+                    if (messageDate < fiveMinutesAgo) {
+                        console.log(`Message ${messageId} is older than 5 minutes, skipping`);
+                        continue;
+                    }
+
+                    console.log(`Replying to new message: ${messageId}`);
+                    await emailProcessingService.addEmailToQueue({ emailId: emailAddress, messageId, platform: 'GMAIL' });
+                }
+            }
         }
-
-        console.log(`Processing latest message: ${latestMessage.id}`);
-        await emailProcessingService.addEmailToQueue({
-            emailId: emailAddress,
-            messageId: latestMessage.id,
-            platform: 'GMAIL',
-        });
 
         await prisma.emailAccount.update({
             where: { email: emailAddress },
@@ -67,7 +62,8 @@ export const gmailWebhook = async (req: Request, res: Response, next: NextFuncti
         console.error('Error in gmailWebhook:', err);
         next(new InternalServerError());
     }
-}
+};
+
 
 export const outlookWebhook = async (req: Request, res: Response, next: NextFunction) => {
     try {

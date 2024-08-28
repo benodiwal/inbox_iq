@@ -37,6 +37,7 @@ model Email {
   subject        String
   content        String
   sender         String
+  messageId      String
   receivedAt     DateTime
   category       EmailCategory
   response       String?
