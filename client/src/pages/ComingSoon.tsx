@@ -82,7 +82,7 @@ const ComingSoonPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 flex flex-col justify-center items-center p-4">
+    <div className="min-h-screen flex flex-col justify-center items-center p-4 mt-[-70px]">
       <div className="max-w-2xl w-full bg-white rounded-lg shadow-2xl overflow-hidden">
         <div className="p-10 text-center">
           <h1 className="text-4xl font-bold text-indigo-700 mb-4">InboxIQ</h1>
