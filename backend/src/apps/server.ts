@@ -14,8 +14,9 @@ const expressApp = Express();
 
 expressApp.use(logger);
 expressApp.use(Express.json());
+expressApp.set('trust proxy', 1);
 expressApp.use(cors({ credentials: true, origin: getEnvVar('CLIENT_ORIGIN') }))
-expressApp.use(cookieSession({ secure: false, httpOnly: true, secret: getEnvVar('COOKIE_SECRET'), signed: true, name: 'benodiwal' }));
+expressApp.use(cookieSession({ secure: true, httpOnly: true, secret: getEnvVar('COOKIE_SECRET'), signed: true, name: 'benodiwal', sameSite: 'none' }));
 expressApp.use(error());
 
 expressApp.get('/health', (_, res) => {
