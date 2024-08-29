@@ -102,8 +102,10 @@ class EmailProcessingService {
                 emailContent = emailContent.substring(0, 16380) + "...";
             }
 
-            const category = await openAiService.categorizeEmail(emailContent);
-            const response = await openAiService.generateResponse(emailContent, category);
+            const category = await openAiService.categorizeEmail({ subject, body: emailContent });
+            
+            const user = await prisma.user.findUnique({ where: { email: emailId } });
+            const response = await openAiService.generateResponse({ subject, body: emailContent }, category, user?.name as string);
 
             const email = await prisma.email.create({
                 data: {

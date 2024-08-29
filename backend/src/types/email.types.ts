@@ -6,4 +6,9 @@ export type EmailJob = {
     platform: $Enums.Platform,
 };
 
+export type EmailContent = {
+    subject: string;
+    body: string;
+};
+
 export type category = 'INTERESTED' | 'NOT_INTERESTED' | 'MORE_INFORMATION';
